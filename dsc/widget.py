@@ -5,13 +5,9 @@ Copyright (c) 2016-2017 University of Oxford, Martin Craig
 
 from __future__ import division, unicode_literals, absolute_import, print_function
 
-import sys
-import os
-import re
+from PySide import QtGui
 
-from PySide import QtCore, QtGui
-
-from quantiphyse.gui.widgets import QpWidget, HelpButton, BatchButton, OverlayCombo, ChoiceOption, NumericOption, NumberList, LoadNumbers, OrderList, OrderListButtons, Citation, TitleWidget, RunBox
+from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget
 from quantiphyse.utils import debug, warn, get_plugins
 from quantiphyse.utils.exceptions import QpException
 
@@ -26,7 +22,7 @@ class FabberDscWidget(QpWidget):
     DSC modelling, using the Fabber process
     """
     def __init__(self, **kwargs):
-        QpWidget.__init__(self, name="DSC", icon="fabber",  group="Fabber", desc="DSC modelling", **kwargs)
+        QpWidget.__init__(self, name="DSC", icon="fabber",  group="DCE-MRI", desc="Bayesian DSC modelling", **kwargs)
         
     def init_ui(self):
         vbox = QtGui.QVBoxLayout()
