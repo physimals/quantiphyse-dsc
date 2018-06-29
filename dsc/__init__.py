@@ -9,6 +9,6 @@ from quantiphyse.utils import get_local_shlib
 from .widget import FabberDscWidget
 
 QP_MANIFEST = {
-    #    "widgets" : [FabberDscWidget],
+    "widgets" : [FabberDscWidget],
     "fabber-libs" : [get_local_shlib("fabber_models_dsc", __file__)]
 }
