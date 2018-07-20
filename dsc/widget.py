@@ -94,13 +94,13 @@ class FabberDscWidget(QpWidget):
             "max-iterations": 20,
         }
         rundata.update(self.options.values())
-        if self.model.value() == "dsc":
+        if self.model.value == "dsc":
             rundata.update(self.classic_options.values())
-        elif self.model.value() == "dsc_cpi":
+        elif self.model.value == "dsc_cpi":
             rundata.update(self.cpi_options.values())
 
         return rundata
 
     def _model_changed(self):
-        self.classic_options.setVisible(self.model.value() == "dsc")
-        self.cpi_options.setVisible(self.model.value() == "dsc_cpi")
+        self.classic_options.setVisible(self.model.value == "dsc")
+        self.cpi_options.setVisible(self.model.value == "dsc_cpi")
