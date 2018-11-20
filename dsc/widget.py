@@ -7,9 +7,9 @@ from __future__ import division, unicode_literals, absolute_import, print_functi
 
 from PySide import QtGui
 
-from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget, RunBox
-from quantiphyse.gui.options import OptionBox, ChoiceOption, NumericOption, BoolOption, VectorOption
-from quantiphyse.utils import get_plugins, QpException
+from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget, RunWidget
+from quantiphyse.gui.options import OptionBox, DataOption, ChoiceOption, NumericOption, BoolOption, VectorOption
+from quantiphyse.utils import get_plugins
 
 from ._version import __version__
 
@@ -17,49 +17,68 @@ FAB_CITE_TITLE = "Variational Bayesian inference for a non-linear forward model"
 FAB_CITE_AUTHOR = "Chappell MA, Groves AR, Whitcher B, Woolrich MW."
 FAB_CITE_JOURNAL = "IEEE Transactions on Signal Processing 57(1):223-236, 2009."
 
-class FabberDscWidget(QpWidget):
+class AifWidget(QtGui.QWidget):
     """
-    DSC modelling, using the Fabber process
+    Widget allowing choice of AIF
     """
-    def __init__(self, **kwargs):
-        QpWidget.__init__(self, name="DSC", icon="fabber", group="DSC-MRI", desc="Bayesian modelling for DSC-MRI", **kwargs)
-        
-    def init_ui(self):
+    def __init__(self, ivm):
+        QtGui.QWidget.__init__(self)
+        self.ivm = ivm
+
         vbox = QtGui.QVBoxLayout()
         self.setLayout(vbox)
 
-        try:
-            self.FabberProcess = get_plugins("processes", "FabberProcess")[0]
-        except:
-            self.FabberProcess = None
-
-        if self.FabberProcess is None:
-            vbox.addWidget(QtGui.QLabel("Fabber core library not found.\n\n You must install Fabber to use this widget"))
-            return
+        self.optbox = OptionBox()
+        self.optbox.add("AIF source", ChoiceOption(["Global sequence of values", "Voxelwise image"], ["global", "voxelwise"]), key="aif_source")
+        self.optbox.option("aif_source").sig_changed.connect(self._aif_source_changed)
+        self.optbox.add("AIF", VectorOption([0, ]), key="aif")
+        self.optbox.add("AIF image", DataOption(self.ivm), key="suppdata")
+        self.optbox.add("AIF type", ChoiceOption(["DSC signal", "Concentration"], [False, True]), key="aifconc")
+        vbox.addWidget(self.optbox)
+        vbox.addStretch()
+        self._aif_source_changed()
         
-        title = TitleWidget(self, help="fabber-dsc", subtitle="DSC modelling using the Fabber process %s" % __version__)
-        vbox.addWidget(title)
-              
-        cite = Citation(FAB_CITE_TITLE, FAB_CITE_AUTHOR, FAB_CITE_JOURNAL)
-        vbox.addWidget(cite)
+    def options(self):
+        """ :return: Dictionary of options selected for the AIF"""
+        opts = self.optbox.values()
+        opts.pop("aif_source")
+        return opts
+        
+    def  _aif_source_changed(self):
+        global_aif = self.optbox.option("aif_source").value == "global"
+        self.optbox.set_visible("aif", global_aif)
+        self.optbox.set_visible("suppdata", not global_aif)
+
+class DscOptionsWidget(QtGui.QWidget):
+    """
+    Widget allowing choice of DSC options
+    """
+    def __init__(self, ivm):
+        QtGui.QWidget.__init__(self)
+        self.ivm = ivm
+        
+        vbox = QtGui.QVBoxLayout()
+        self.setLayout(vbox)
+
+        self.optbox = OptionBox()
+
+        self.optbox.add("DSC Data", DataOption(self.ivm), key="data")
+        self.optbox.add("ROI", DataOption(self.ivm, rois=True, data=False), key="mask")
+        self.optbox.add("Model choice", ChoiceOption(["Standard", "Control point interpolation"], ["dsc", "dsc_cpi"]), key="model")
+        self.optbox.add("TE (s)", NumericOption(minval=0, maxval=0.1, default=0), key="te")
+        self.optbox.add("Time interval between volumes (s)", NumericOption(minval=0, maxval=10, default=1), key="delt")
+        self.optbox.add("Apply dispersion to AIF", BoolOption(), key="disp")
+        self.optbox.add("Infer delay parameter", BoolOption(default=True), key="inferdelay")
+        self.optbox.add("Infer arterial component", BoolOption(), key="inferart")
+        self.optbox.add("Spatial regularization", BoolOption(default=True), key="spatial")
+        self.optbox.option("model").sig_changed.connect(self._model_changed)
+
+        vbox.addWidget(self.optbox)
 
         hbox = QtGui.QHBoxLayout()
-
-        self.options = OptionBox("Options")
-        self.model = self.options.add("Model choice", ChoiceOption(["Classic", "Control point interpolation"], ["dsc", "dsc_cpi"]), key="model")
-        self.model.sig_changed.connect(self._model_changed)
-
-        self.options.add("TE (s)", NumericOption(minval=0, maxval=5, default=1), key="te")
-        self.options.add("Time interval between volumes (s)", NumericOption(minval=0, maxval=10, default=1), key="delt")
-        self.options.add("AIF", VectorOption([0, ]), ChoiceOption(["Signal", "Concentration"], [False, True]), keys=("aif", "aifconc"))
-
-        hbox.addWidget(self.options)
-        hbox.addStretch(1)
-        vbox.addLayout(hbox)
-
-        hbox = QtGui.QHBoxLayout()
-        self.classic_options = OptionBox("Classic model")
-        self.classic_options.add("Infer MTT", BoolOption(), key="infermtt")
+        self.classic_options = OptionBox("Standard model")
+        self.classic_options.add("Infer MTT", BoolOption(default=True), key="infermtt")
+        self.classic_options.add("Infer lambda", BoolOption(default=True), key="inferlambda")
         hbox.addWidget(self.classic_options)
         hbox.addStretch(1)
         vbox.addLayout(hbox)
@@ -73,34 +92,79 @@ class FabberDscWidget(QpWidget):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        run_box = RunBox(self.get_process, self.get_rundata)
-        vbox.addWidget(run_box)
+        vbox.addStretch()
+        
+    def options(self):
+        """ :return: Dictionary of options selected for the DSC analysis"""
+        opts = self.optbox.values()
+        if opts["model"] == "dsc":
+            opts.update(self.classic_options.values())
+        elif opts["model"] == "dsc_cpi":
+            opts.update(self.cpi_options.values())
+        if opts.pop("spatial", False):
+            opts["method"] = "spatialvb"
+            opts["param-spatial-priors"] = "N+M"
+        return opts
+        
+    def _model_changed(self):
+        classic = self.optbox.option("model").value == "dsc"
+        self.classic_options.setVisible(classic)
+        self.cpi_options.setVisible(not classic)
+
+class FabberDscWidget(QpWidget):
+    """
+    DSC modelling, using the Fabber process
+    """
+    def __init__(self, **kwargs):
+        QpWidget.__init__(self, name="DSC", icon="fabber", group="DSC-MRI", desc="Bayesian modelling for DSC-MRI", **kwargs)
+        
+    def init_ui(self):
+        vbox = QtGui.QVBoxLayout()
+        self.setLayout(vbox)
+
+        try:
+            proc = get_plugins("processes", "FabberProcess")[0]
+        except:
+            proc = None
+
+        if proc is None:
+            vbox.addWidget(QtGui.QLabel("Fabber core library not found.\n\n You must install Fabber to use this widget"))
+            return
+        
+        title = TitleWidget(self, help="fabber-dsc", subtitle="Bayesian modelling for DSC-MRI %s" % __version__)
+        vbox.addWidget(title)
+              
+        cite = Citation(FAB_CITE_TITLE, FAB_CITE_AUTHOR, FAB_CITE_JOURNAL)
+        vbox.addWidget(cite)
+
+        tabs = QtGui.QTabWidget()
+        vbox.addWidget(tabs)
+        self.dsc_widget = DscOptionsWidget(self.ivm)
+        tabs.addTab(self.dsc_widget, "DSC Options")
+        self.aif_widget = AifWidget(self.ivm)
+        tabs.addTab(self.aif_widget, "AIF")
+        vbox.addWidget(tabs)
+        
+        vbox.addWidget(RunWidget(self))
 
         vbox.addStretch(1)
 
-    def get_process(self):
-        return self.FabberProcess(self.ivm)
-
-    def batch_options(self):
-        return "Fabber", self.get_rundata()
-
-    def get_rundata(self):
-        rundata = {
+    def processes(self):
+        opts = {
             "model-group" : "dsc",
             "save-mean" : True,
             "save-model-fit" : True,
             "save-model-extras" : True,
             "noise": "white",
             "max-iterations": 20,
+            "output-rename" : {
+                "mean_cbf" : "rCBF",
+                "mean_transitm" : "MTT",
+                "mean_lambda" : "lam",
+            }
         }
-        rundata.update(self.options.values())
-        if self.model.value == "dsc":
-            rundata.update(self.classic_options.values())
-        elif self.model.value == "dsc_cpi":
-            rundata.update(self.cpi_options.values())
-
-        return rundata
-
-    def _model_changed(self):
-        self.classic_options.setVisible(self.model.value == "dsc")
-        self.cpi_options.setVisible(self.model.value == "dsc_cpi")
+        opts.update(self.dsc_widget.options())
+        opts.update(self.aif_widget.options())
+        return {
+            "Fabber" : opts
+        }
