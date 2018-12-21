@@ -116,7 +116,7 @@ class FabberDscWidget(QpWidget):
     DSC modelling, using the Fabber process
     """
     def __init__(self, **kwargs):
-        QpWidget.__init__(self, name="DSC", icon="fabber", group="DSC-MRI", desc="Bayesian modelling for DSC-MRI", **kwargs)
+        QpWidget.__init__(self, name="DSC", icon="dsc", group="DSC-MRI", desc="Bayesian modelling for DSC-MRI", **kwargs)
         
     def init_ui(self):
         vbox = QtGui.QVBoxLayout()
