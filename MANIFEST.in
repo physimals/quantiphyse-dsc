@@ -1,2 +1,2 @@
 include requirements.txt
-include dsc/*.png dsc/*.svg
+include quantiphyse_dsc/*.png quantiphyse_dsc/*.svg
