@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import re
 
-package_name = "dsc"
+package_name = "quantiphyse_dsc"
 fabber_models_lib = "fabber_models_dsc"
 
 def update_version(name, rootdir):

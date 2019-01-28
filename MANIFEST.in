@@ -1,0 +1,2 @@
+include requirements.txt
+include dsc/*.png dsc/*.svg
