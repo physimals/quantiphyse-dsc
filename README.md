@@ -1,12 +1,12 @@
-DSC plugin for Quantiphyse using Fabber
+DSC plugin for Quantiphyse
+==========================
 
-To build, use python packaging/build.py. Currently it does not make any 
-sense to install using the setup script.
+This plugin provides modelling tools for DSC-MRI. 
 
-The plugin is in dist/dsc and can be copied into the Quantiphyse
-plugins folder.
+Quantiphyse and quantiphyse-fabber must be installed. To
+install the plugin from PyPi use:
 
-A platform-specific package is also created in dist (e.g. DEB, DMG
-or MSI)
+    pip install quantiphyse-dsc
 
-The generic Fabber plugin must be installed for this plugin to work
+The plugin will then be available from within Quantiphyse
+
