@@ -1,1 +1,4 @@
 include LICENSE requirements.txt
+recursive-include quantiphyse_dsc *.pyx *.png *.svg
+recursive-include src *
+
