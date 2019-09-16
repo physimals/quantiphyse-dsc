@@ -106,7 +106,7 @@ class DscOptionsWidget(QtGui.QWidget):
             opts.update(self.cpi_options.values())
         if opts.pop("spatial", False):
             opts["method"] = "spatialvb"
-            opts["param-spatial-priors"] = "N+M"
+            opts["param-spatial-priors"] = "MN+"
         return opts
         
     def _model_changed(self):
