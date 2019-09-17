@@ -10,8 +10,8 @@ try:
 except ImportError:
     from PySide2 import QtGui, QtCore, QtWidgets
 
-from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget, RunWidget
-from quantiphyse.gui.options import OptionBox, DataOption, ChoiceOption, NumericOption, BoolOption, VectorOption
+from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget, RunBox, RunWidget
+from quantiphyse.gui.options import OptionBox, TextOption, DataOption, ChoiceOption, NumericOption, BoolOption, NumberListOption
 from quantiphyse.utils import get_plugins
 
 from ._version import __version__
@@ -34,7 +34,7 @@ class AifWidget(QtGui.QWidget):
         self.optbox = OptionBox()
         self.optbox.add("AIF source", ChoiceOption(["Global sequence of values", "Voxelwise image"], ["global", "voxelwise"]), key="aif_source")
         self.optbox.option("aif_source").sig_changed.connect(self._aif_source_changed)
-        self.optbox.add("AIF", VectorOption([0, ]), key="aif")
+        self.optbox.add("AIF", NumberListOption(), key="aif")
         self.optbox.add("AIF image", DataOption(self.ivm), key="suppdata")
         self.optbox.add("AIF type", ChoiceOption(["DSC signal", "Concentration"], [False, True]), key="aifconc")
         vbox.addWidget(self.optbox)
@@ -73,7 +73,10 @@ class DscOptionsWidget(QtGui.QWidget):
         self.optbox.add("Apply dispersion to AIF", BoolOption(), key="disp")
         self.optbox.add("Infer delay parameter", BoolOption(default=True), key="inferdelay")
         self.optbox.add("Infer arterial component", BoolOption(), key="inferart")
-        self.optbox.add("Spatial regularization", BoolOption(default=True), key="spatial")
+        self.optbox.add("Log transform on rCBF", BoolOption(), key="log-cbf")
+        self.optbox.add("Output residue function", BoolOption(), key="save-model-extras")
+        self.optbox.add("Spatial regularization", ChoiceOption(("None", "Standard", "Full"), default="Standard"), key="spatial")
+        self.optbox.add("Output data suffix", TextOption(), checked=True, key="output-suffix")
         self.optbox.option("model").sig_changed.connect(self._model_changed)
 
         vbox.addWidget(self.optbox)
@@ -104,9 +107,21 @@ class DscOptionsWidget(QtGui.QWidget):
             opts.update(self.classic_options.values())
         elif opts["model"] == "dsc_cpi":
             opts.update(self.cpi_options.values())
-        if opts.pop("spatial", False):
+
+        spatial = opts.pop("spatial", "None")
+        if spatial == "Standard":
             opts["method"] = "spatialvb"
             opts["param-spatial-priors"] = "MN+"
+        elif spatial == "Full":
+            opts["method"] = "spatialvb"
+            opts["param-spatial-priors"] = "M+"
+
+        if opts.pop("log-cbf", False):
+            opts["PSP_byname1"] = "cbf"
+            opts["PSP_byname1_mean"] = 0.1
+            opts["PSP_byname1_prec"] = 1e-4
+            opts["PSP_byname1_transform"] = "L"
+
         return opts
         
     def _model_changed(self):
@@ -148,6 +163,7 @@ class FabberDscWidget(QpWidget):
         tabs.addTab(self.aif_widget, "AIF")
         vbox.addWidget(tabs)
         
+        #vbox.addWidget(RunBox(widget=self, save_option=True))
         vbox.addWidget(RunWidget(self))
 
         vbox.addStretch(1)
@@ -157,17 +173,24 @@ class FabberDscWidget(QpWidget):
             "model-group" : "dsc",
             "save-mean" : True,
             "save-model-fit" : True,
-            "save-model-extras" : True,
             "noise": "white",
             "max-iterations": 20,
-            "output-rename" : {
-                "mean_cbf" : "rCBF",
-                "mean_transitm" : "MTT",
-                "mean_lambda" : "lam",
-            }
         }
         opts.update(self.dsc_widget.options())
         opts.update(self.aif_widget.options())
+
+        suffix = opts.pop("output-suffix", "")
+        opts["output-rename"] = {
+            "mean_sig0" : "sig0%s" % suffix,
+            "mean_cbf" : "rCBF%s" % suffix,
+            "mean_transitm" : "MTT%s" % suffix,
+            "mean_lambda" : "lam%s" % suffix,
+            "mean_abv" : "rABV%s" % suffix,
+            "mean_delay" : "delay%s" % suffix,
+            "mean_artdelay" : "artdelay%s" % suffix,
+            "dsc_residual" : "dsc_residue%s" % suffix,
+        }
+        
         return {
             "Fabber" : opts
         }
