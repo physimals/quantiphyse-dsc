@@ -175,9 +175,12 @@ class FabberDscWidget(QpWidget):
             "save-model-fit" : True,
             "noise": "white",
             "max-iterations": 20,
+            "allow-bad-voxels" : True,
         }
         opts.update(self.dsc_widget.options())
         opts.update(self.aif_widget.options())
+
+        opts["aifsig"] = not opts["aifconc"]
 
         suffix = opts.pop("output-suffix", "")
         opts["output-rename"] = {
