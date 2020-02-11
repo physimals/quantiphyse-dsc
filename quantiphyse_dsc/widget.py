@@ -108,6 +108,9 @@ class DscOptionsWidget(QtGui.QWidget):
         elif opts["model"] == "dsc_cpi":
             opts.update(self.cpi_options.values())
 
+        # delt in model is measured in minutes
+        opts["delt"] = opts["delt"] / 60.0
+
         spatial = opts.pop("spatial", "None")
         if spatial == "Standard":
             opts["method"] = "spatialvb"
@@ -184,6 +187,7 @@ class FabberDscWidget(QpWidget):
 
         suffix = opts.pop("output-suffix", "")
         opts["output-rename"] = {
+            "modelfit" : "modelfit%s" % suffix,
             "mean_sig0" : "sig0%s" % suffix,
             "mean_cbf" : "rCBF%s" % suffix,
             "mean_transitm" : "MTT%s" % suffix,
