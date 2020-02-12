@@ -108,9 +108,6 @@ class DscOptionsWidget(QtGui.QWidget):
         elif opts["model"] == "dsc_cpi":
             opts.update(self.cpi_options.values())
 
-        # delt in model is measured in minutes
-        opts["delt"] = opts["delt"] / 60.0
-
         spatial = opts.pop("spatial", "None")
         if spatial == "Standard":
             opts["method"] = "spatialvb"
