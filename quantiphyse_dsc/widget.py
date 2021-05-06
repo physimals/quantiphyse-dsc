@@ -163,9 +163,7 @@ class FabberDscWidget(QpWidget):
         tabs.addTab(self.aif_widget, "AIF")
         vbox.addWidget(tabs)
         
-        #vbox.addWidget(RunBox(widget=self, save_option=True))
-        vbox.addWidget(RunWidget(self))
-
+        vbox.addWidget(RunWidget(self, save_option=True))
         vbox.addStretch(1)
 
     def processes(self):
