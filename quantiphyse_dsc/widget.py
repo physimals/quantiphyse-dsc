@@ -5,10 +5,7 @@ Copyright (c) 2016-2017 University of Oxford, Martin Craig
 
 from __future__ import division, unicode_literals, absolute_import, print_function
 
-try:
-    from PySide import QtGui, QtCore, QtGui as QtWidgets
-except ImportError:
-    from PySide2 import QtGui, QtCore, QtWidgets
+from PySide2 import QtGui, QtCore, QtWidgets
 
 from quantiphyse.gui.widgets import QpWidget, Citation, TitleWidget, RunBox, RunWidget
 from quantiphyse.gui.options import OptionBox, TextOption, DataOption, ChoiceOption, NumericOption, BoolOption, NumberListOption
@@ -20,15 +17,15 @@ FAB_CITE_TITLE = "Variational Bayesian inference for a non-linear forward model"
 FAB_CITE_AUTHOR = "Chappell MA, Groves AR, Whitcher B, Woolrich MW."
 FAB_CITE_JOURNAL = "IEEE Transactions on Signal Processing 57(1):223-236, 2009."
 
-class AifWidget(QtGui.QWidget):
+class AifWidget(QtWidgets.QWidget):
     """
     Widget allowing choice of AIF
     """
     def __init__(self, ivm):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.ivm = ivm
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         self.setLayout(vbox)
 
         self.optbox = OptionBox()
@@ -52,15 +49,15 @@ class AifWidget(QtGui.QWidget):
         self.optbox.set_visible("aif", global_aif)
         self.optbox.set_visible("suppdata", not global_aif)
 
-class DscOptionsWidget(QtGui.QWidget):
+class DscOptionsWidget(QtWidgets.QWidget):
     """
     Widget allowing choice of DSC options
     """
     def __init__(self, ivm):
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.ivm = ivm
         
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         self.setLayout(vbox)
 
         self.optbox = OptionBox()
@@ -81,7 +78,7 @@ class DscOptionsWidget(QtGui.QWidget):
 
         vbox.addWidget(self.optbox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         self.classic_options = OptionBox("Standard model")
         self.classic_options.add("Infer MTT", BoolOption(default=True), key="infermtt")
         self.classic_options.add("Infer lambda", BoolOption(default=True), key="inferlambda")
@@ -89,7 +86,7 @@ class DscOptionsWidget(QtGui.QWidget):
         hbox.addStretch(1)
         vbox.addLayout(hbox)
         
-        hbox = QtGui.QHBoxLayout()
+        hbox = QtWidgets.QHBoxLayout()
         self.cpi_options = OptionBox("CPI model")
         self.cpi_options.setVisible(False)
         self.cpi_options.add("Number of control points", NumericOption(minval=3, maxval=20, default=5, intonly=True), key="num-cps")
@@ -137,7 +134,7 @@ class FabberDscWidget(QpWidget):
         QpWidget.__init__(self, name="DSC", icon="dsc", group="DSC-MRI", desc="Bayesian modelling for DSC-MRI", **kwargs)
         
     def init_ui(self):
-        vbox = QtGui.QVBoxLayout()
+        vbox = QtWidgets.QVBoxLayout()
         self.setLayout(vbox)
 
         try:
@@ -146,7 +143,7 @@ class FabberDscWidget(QpWidget):
             proc = None
 
         if proc is None:
-            vbox.addWidget(QtGui.QLabel("Fabber core library not found.\n\n You must install Fabber to use this widget"))
+            vbox.addWidget(QtWidgets.QLabel("Fabber core library not found.\n\n You must install Fabber to use this widget"))
             return
         
         title = TitleWidget(self, help="fabber-dsc", subtitle="Bayesian modelling for DSC-MRI %s" % __version__)
@@ -155,7 +152,7 @@ class FabberDscWidget(QpWidget):
         cite = Citation(FAB_CITE_TITLE, FAB_CITE_AUTHOR, FAB_CITE_JOURNAL)
         vbox.addWidget(cite)
 
-        tabs = QtGui.QTabWidget()
+        tabs = QtWidgets.QTabWidget()
         vbox.addWidget(tabs)
         self.dsc_widget = DscOptionsWidget(self.ivm)
         tabs.addTab(self.dsc_widget, "DSC Options")
